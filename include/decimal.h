@@ -9,8 +9,10 @@ class Decimal {
     int precision;
     bool isNegative;
 
-    static bool isValid(const std::string& str);
-    void addZeroes(int count);
+    static bool isValidStr(const std::string& str);
+    static bool isValidExp(const std::string& str);
+    static std::string calculateExp(const std::string& str);
+    void addZeros(int count);
     void parse(const std::string& value);
 
 public:
@@ -21,20 +23,20 @@ public:
 
     ~Decimal() = default;
 
-    Decimal& operator=(const Decimal& other); //
-    Decimal& operator=(Decimal&& other) noexcept; //
+    Decimal& operator=(const Decimal& other);
+    Decimal& operator=(Decimal&& other) noexcept;
 
     Decimal operator+(const Decimal& other) const;
     Decimal operator-(const Decimal& other) const;
     Decimal operator*(const Decimal& other) const;
     Decimal operator/(const Decimal& other) const;
 
-    bool operator==(const Decimal& other) const;//
-    bool operator!=(const Decimal& other) const;//
-    bool operator<(const Decimal& other) const;//
-    bool operator<=(const Decimal& other) const;//
-    bool operator>(const Decimal& other) const;//
-    bool operator>=(const Decimal& other) const;//
+    bool operator==(const Decimal& other) const;
+    bool operator!=(const Decimal& other) const;
+    bool operator<(const Decimal& other) const;
+    bool operator<=(const Decimal& other) const;
+    bool operator>(const Decimal& other) const;
+    bool operator>=(const Decimal& other) const;
 
     void round(int in_precision);
 
@@ -48,6 +50,5 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Decimal& d);
     friend std::istream& operator>>(std::istream& is, Decimal& d);
 };
-
 
 #endif

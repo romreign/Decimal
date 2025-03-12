@@ -1,12 +1,17 @@
 #include "../include/decimal.h"
 #include <limits>
 #include <regex>
+#include <vector>
 
 Decimal::Decimal() {
     integerPart = "0";
     fractionalPart = "";
     precision = 0;
     isNegative = false;
+}
+
+Decimal::Decimal(std::string const std::string& value) {
+    parse(value);
 }
 
 Decimal::Decimal(const Decimal& other) {
@@ -50,19 +55,63 @@ Decimal& Decimal::operator=(Decimal&& other) noexcept {
 }
 
 Decimal Decimal::operator+(const Decimal& other) const {
+    if (isNegative == other.isNegative) {
 
+    }
+    return *this - other;
 }
 
 Decimal Decimal::operator-(const Decimal& other) const{
+    if (isNegative != other.isNegative) {
 
+    }
+    return *this + other;
 }
 
 Decimal Decimal::operator*(const Decimal& other) const{
+    std::string num1 = integerPart + fractionalPart;
+    std::string num2 = other.integerPart + other.fractionalPart;
+    std::string resultString = (isNegative == other.isNegative) ? "" : "-";
+    std::string integerPartString = "";
+    std::string fractionalPartString = "";
+    const int len1 = num1.size();
+    const int len2 = num2.size();
+    const int newPrecision = precision + other.precision;
+    const int indexFractionalPart = len1 + len2 - newPrecision;
+    int skipZeros = 0;
+    std::vector<char> resultVector(len1 + len2, '0');
 
+    for (auto i = len1 - 1; i >= 0; --i) {
+        for (auto j = len2 - 1; j >= 0; ++j) {
+            auto multi = (num1[i] - '0') * (num2[j] - '0');
+            auto sum = multi + resultVector[i + j + 1];
+            resultVector[i + j + 1] = sum % 10;
+            resultVector[i + j] = resultVector[i + j] + sum / 10;
+        }
+    }
+
+    fractionalPartString = std::string(resultVector.begin() + indexFractionalPart, resultVector.end());
+
+    while (skipZeros < indexFractionalPart && resultVector[skipZeros] == '0')
+        ++skipZeros;
+
+    if (indexFractionalPart == skipZeros)
+        integerPartString = "0";
+    else
+        integerPartString = std::string(resultVector.begin() + skipZeros, resultVector.begin() + indexFractionalPart);
+
+    if (newPrecision == 0)
+        resultString = integerPartString == "0" ? "0" : (resultString + integerPartString);
+    else
+        resultString += integerPartString + '.' + fractionalPartString;
+
+    return Decimal{resultString};
 }
 
 Decimal Decimal::operator/(const Decimal& other) const{
+    std::string resultString = (isNegative == other.isNegative) ? "" : "-";
 
+    return Decimal{resultString};
 }
 
 bool Decimal::operator==(const Decimal& other) const{
@@ -117,10 +166,11 @@ bool Decimal::operator>=(const Decimal& other) const {
 
 void Decimal::round(int in_precision) {
     if (in_precision > precision) {
-        addZeroes(in_precision - precision);
+        addZeros(in_precision - precision);
         precision = in_precision;
         return;
     }
+
 
 }
 
@@ -184,14 +234,15 @@ double Decimal::toDouble() const {
 void Decimal::setPrecision(int in_precision) {
     if (in_precision == precision)
         return;
-    else round(in_precision);
+    else
+        round(in_precision);
 }
 
 int Decimal::getPrecision() {
     return precision;
 }
 
-void Decimal::addZeroes(int count){
+void Decimal::addZeros(int count){
     for (auto i = 0; i < count; i++) {
         fractionalPart += '0';
     }
@@ -204,29 +255,38 @@ std::ostream& operator<<(std::ostream& os, const Decimal& d) {
     return os;
 }
 
-void Decimal::parse(const std::string& value) {
-    if (isValid(value)) {
-        size_t dotPos = value.find('.');
-        if (dotPos == std::string::npos) {
-            integerPart = value;
-            fractionalPart = "";
-        } else {
-            integerPart = value.substr(0, dotPos);
-            fractionalPart = value.substr(dotPos + 1);
-        }
-        precision = fractionalPart.size();
+static bool isValidExp(const std::string& str) {
 
-        if (!integerPart.empty() && integerPart[0] == '-') {
-            isNegative = true;
-            integerPart.erase(0, 1);
+    return true;
+}
+
+static std::string calculateExp(const std::string& str) {
+    std::string result = "";
+
+    return result;
+}
+
+void Decimal::parse(const std::string& value) {
+    if (isValidStr(value)) {
+        isNegative = (value[0] == '-');
+        std::string absValue = (isNegative) ? value.substr(1) : value;
+        size_t dotPos = absValue.find('.');
+
+        if (dotPos != std::string::npos) {
+            integerPart = absValue.substr(0, dotPos);
+            fractionalPart = absValue.substr(dotPos + 1);
+        } else {
+            integerPart = absValue;
+            fractionalPart = "";
         }
+
+        precision = fractionalPart.size();
     }
-    else {
-        integerPart = "0";
-        fractionalPart = "";
-        precision = 0;
-        isNegative = false;
+    else if (isValidExp(value)) {
+        calculateExp(value);
     }
+    else
+        *this = Decimal();
 }
 
 std::istream& operator>>(std::istream& is, Decimal& d) {
@@ -236,7 +296,7 @@ std::istream& operator>>(std::istream& is, Decimal& d) {
     return is;
 }
 
-bool Decimal::isValid(const std::string& str) {
-    static const std::regex pattern(R"(^[+-]?(0|[1-9]\d*)(\.\d+)?$)");
+bool Decimal::isValidStr(const std::string& str) {
+    static const std::regex pattern(R"(^[-]?(0|[1-9]\d*)(\.\d+)?$)");
     return std::regex_match(str, pattern);
 }
