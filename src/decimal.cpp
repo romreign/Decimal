@@ -10,7 +10,7 @@ Decimal::Decimal() {
     isNegative = false;
 }
 
-Decimal::Decimal(std::string const std::string& value) {
+Decimal::Decimal(const std::string& value) {
     parse(value);
 }
 
@@ -21,10 +21,8 @@ Decimal::Decimal(const Decimal& other) {
     isNegative = other.isNegative;
 }
 
-Decimal::Decimal(Decimal&& other) noexcept : integerPart(other.integerPart), fractionalPart(other.fractionalPart),
+Decimal::Decimal(Decimal&& other) noexcept : integerPart(std::move(other.integerPart)), fractionalPart(std::move(other.fractionalPart)),
                                              precision(other.precision), isNegative(other.isNegative){
-    other.integerPart.clear();
-    other.fractionalPart.clear();
     other.precision = 0;
     other.isNegative = false;
 }
@@ -41,13 +39,11 @@ Decimal& Decimal::operator=(const Decimal& other){
 
 Decimal& Decimal::operator=(Decimal&& other) noexcept {
     if (this != &other) {
-        integerPart = other.integerPart;
-        fractionalPart = other.fractionalPart;
+        integerPart = std::move(other.integerPart);
+        fractionalPart = std::move(other.fractionalPart);
         precision = other.precision;
         isNegative = other.isNegative;
 
-        other.integerPart.clear();
-        other.fractionalPart.clear();
         other.precision = 0;
         other.isNegative = false;
     }
@@ -171,7 +167,34 @@ void Decimal::round(int in_precision) {
         return;
     }
 
+    int index = precision - 1;
+    bool isRound = false;
 
+    while (index >= 0 && (index >= in_precision || isRound)) {
+        if (index > 0 && (fractionalPart[index] - '0' >= 5 || isRound)) {
+            fractionalPart[index - 1] = fractionalPart[index - 1] == '9' ? '0' : (((fractionalPart[index - 1] - '0') + 1) + '0');
+            isRound = fractionalPart[index - 1] == '0' ? true : false;
+        } else if (index == 0)
+            isRound = fractionalPart[index] == '0' ? true : false;
+        --index;
+    }
+
+    fractionalPart = std::string(fractionalPart.begin(), fractionalPart.begin() + in_precision - 1);
+
+    if (isRound) {
+        index = integerPart.size() - 1;
+        while (index >= 0 && isRound) {
+            if (index > 0) {
+                fractionalPart[index] = fractionalPart[index] == '9' ? '0' : (((fractionalPart[index] - '0') + 1) + '0');
+                isRound = fractionalPart[index] == '0' ? true : false;
+            } else if (index == 0) {
+                fractionalPart[index] = fractionalPart[index] == '9' ? '0' : (((fractionalPart[index] - '0') + 1) + '0');
+                integerPart = (fractionalPart[index] == '0')? "1" + integerPart : integerPart;
+                break;
+            }
+            --index;
+        }
+    }
 }
 
 std::string Decimal::toString() const{
@@ -250,24 +273,28 @@ void Decimal::addZeros(int count){
 
 std::ostream& operator<<(std::ostream& os, const Decimal& d) {
     std::string out = d.isNegative ? "-" : "";
-    out += d.integerPart + '.' + d.fractionalPart;
+
+    out += d.integerPart;
+    if (d.precision != 0)
+        out += '.' + d.fractionalPart;
+
     os << out;
     return os;
 }
 
-static bool isValidExp(const std::string& str) {
-
-    return true;
+bool Decimal::isValidExp(const std::string& exp) {
+    std::regex pattern(R"(^([+-]?(\d+(\.\d+)?|\d+\.\d*)(\s*[-+*/]\s*[+-]?(\d+(\.\d+)?|\d+\.\d*))*?)?$)");
+    return std::regex_match(exp, pattern);
 }
 
-static std::string calculateExp(const std::string& str) {
+std::string Decimal::calculateExp(const std::string& exp) {
     std::string result = "";
 
     return result;
 }
 
 void Decimal::parse(const std::string& value) {
-    if (isValidStr(value)) {
+    if (isValidNum(value)) {
         isNegative = (value[0] == '-');
         std::string absValue = (isNegative) ? value.substr(1) : value;
         size_t dotPos = absValue.find('.');
@@ -296,7 +323,7 @@ std::istream& operator>>(std::istream& is, Decimal& d) {
     return is;
 }
 
-bool Decimal::isValidStr(const std::string& str) {
+bool Decimal::isValidNum(const std::string& num) {
     static const std::regex pattern(R"(^[-]?(0|[1-9]\d*)(\.\d+)?$)");
-    return std::regex_match(str, pattern);
+    return std::regex_match(num, pattern);
 }

@@ -9,9 +9,9 @@ class Decimal {
     int precision;
     bool isNegative;
 
-    static bool isValidStr(const std::string& str);
-    static bool isValidExp(const std::string& str);
-    static std::string calculateExp(const std::string& str);
+    static bool isValidNum(const std::string& num);
+    static bool isValidExp(const std::string& exp);
+    static std::string calculateExp(const std::string& exp);
     void addZeros(int count);
     void parse(const std::string& value);
 
