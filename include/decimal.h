@@ -12,6 +12,10 @@ class Decimal {
     static bool isValidNum(const std::string& num);
     static bool isValidExp(const std::string& exp);
     static std::string calculateExp(const std::string& exp);
+    static int compareStrings(const std::string& str1, const std::string& str2);
+    static int precedence(char op);
+    static std::string subtractStrings(std::string a, std::string b);
+    static Decimal applyOp(Decimal num1, Decimal num2, char op);
     void addZeros(int count);
     void parse(const std::string& value);
 
