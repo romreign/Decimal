@@ -3,7 +3,7 @@
 #include <regex>
 #include <vector>
 
-Decimal::Decimal() {
+Decimal::Decimal() noexcept{
     integerPart = "0";
     fractionalPart = "";
     precision = 0;
@@ -412,7 +412,7 @@ void Decimal::setPrecision(int in_precision) {
         round(in_precision);
 }
 
-int Decimal::getPrecision() {
+int Decimal::getPrecision() const noexcept{
     return precision;
 }
 
@@ -578,4 +578,16 @@ int Decimal::precedence(char op) {
     if (op == '+' || op == '-') return 1;
     if (op == '*' || op == '/') return 2;
     return 0;
+}
+
+std::string Decimal::getIntegerPart() const noexcept{
+    return integerPart;
+}
+
+std::string Decimal::getFractionalPart() const noexcept{
+    return fractionalPart;
+}
+
+bool Decimal::getIsNegative() const noexcept{
+    return isNegative;
 }

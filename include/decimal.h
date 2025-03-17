@@ -20,7 +20,7 @@ class Decimal {
     void parse(const std::string& value);
 
 public:
-    Decimal();
+    Decimal() noexcept;
     Decimal(const std::string& value);
     Decimal(const Decimal& other);
     Decimal(Decimal&& other) noexcept;
@@ -49,7 +49,11 @@ public:
     double toDouble() const;
 
     void setPrecision(int in_precision);
-    int getPrecision();
+    int getPrecision() const noexcept;
+
+    std::string getIntegerPart() const noexcept;
+    std::string getFractionalPart() const noexcept;
+    bool getIsNegative() const noexcept;
 
     friend std::ostream& operator<<(std::ostream& os, const Decimal& d);
     friend std::istream& operator>>(std::istream& is, Decimal& d);
