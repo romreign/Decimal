@@ -21,8 +21,10 @@ Decimal::Decimal(const Decimal& other) {
     isNegative = other.isNegative;
 }
 
-Decimal::Decimal(Decimal&& other) noexcept : integerPart(std::move(other.integerPart)), fractionalPart(std::move(other.fractionalPart)),
+Decimal::Decimal(Decimal&& other) noexcept : integerPart(other.integerPart), fractionalPart(other.fractionalPart),
                                              precision(other.precision), isNegative(other.isNegative){
+    other.integerPart.clear();
+    other.fractionalPart.clear();
     other.precision = 0;
     other.isNegative = false;
 }
@@ -39,11 +41,13 @@ Decimal& Decimal::operator=(const Decimal& other){
 
 Decimal& Decimal::operator=(Decimal&& other) noexcept {
     if (this != &other) {
-        integerPart = std::move(other.integerPart);
-        fractionalPart = std::move(other.fractionalPart);
+        integerPart = other.integerPart;
+        fractionalPart = other.fractionalPart;
         precision = other.precision;
         isNegative = other.isNegative;
 
+        other.integerPart.clear();
+        other.fractionalPart.clear();
         other.precision = 0;
         other.isNegative = false;
     }
@@ -51,6 +55,14 @@ Decimal& Decimal::operator=(Decimal&& other) noexcept {
 }
 
 Decimal Decimal::operator+(const Decimal& other) const {
+
+    if (other.integerPart == "0" && other.fractionalPart.empty()) {
+        return *this;
+    }
+    if (integerPart == "0" && fractionalPart.empty()) {
+        return other;
+    }
+
     Decimal result;
     std::string num1 = integerPart + fractionalPart;
     std::string num2 = other.integerPart + other.fractionalPart;
@@ -97,7 +109,19 @@ Decimal Decimal::operator+(const Decimal& other) const {
 }
 
 Decimal Decimal::operator-(const Decimal& other) const{
+    if (other.integerPart == "0" && other.fractionalPart.empty())
+        return *this;
+
+    if (*this == other)
+        return Decimal{0};
+
     Decimal result;
+    if (integerPart == "0" && fractionalPart.empty()) {
+        result = other;
+        result.isNegative = !other.isNegative;
+        return result;
+    }
+
     std::string num1 = integerPart + fractionalPart;
     std::string num2 = other.integerPart + other.fractionalPart;
 
@@ -270,38 +294,86 @@ bool Decimal::operator!=(const Decimal& other) const{
 }
 
 bool Decimal::operator<(const Decimal& other) const{
-    if ((isNegative && !other.isNegative) ||
-        (other.isNegative == isNegative &&
-               (other.integerPart > integerPart ||
-               (other.integerPart == integerPart && other.fractionalPart > fractionalPart))))
+    if (isNegative && !other.isNegative)
         return true;
+
+    if (isNegative && isNegative == other.isNegative) {
+        if (integerPart > other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart > other.fractionalPart))
+            return true;
+    }
+
+    if (!isNegative && isNegative == other.isNegative) {
+        if (integerPart < other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart < other.fractionalPart))
+            return true;
+    }
+
     return false;
 }
 
 bool Decimal::operator<=(const Decimal& other) const{
-    if ((isNegative && !other.isNegative) ||
-        (other.isNegative == isNegative && (
-               (other.integerPart > integerPart) ||
-               (other.integerPart == integerPart && other.fractionalPart >= fractionalPart))))
+    if (isNegative && !other.isNegative)
         return true;
+
+    if (isNegative && isNegative == other.isNegative) {
+        if (integerPart > other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart >= other.fractionalPart))
+            return true;
+    }
+
+    if (!isNegative && isNegative == other.isNegative) {
+        if (integerPart < other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart <= other.fractionalPart))
+            return true;
+    }
+
     return false;
 }
 
 bool Decimal::operator>(const Decimal& other) const{
-    if ((!isNegative && other.isNegative) ||
-        (other.isNegative == isNegative &&
-               (other.integerPart < integerPart ||
-               (other.integerPart == integerPart && other.fractionalPart < fractionalPart))))
+    if (!isNegative && other.isNegative)
         return true;
+
+    if (isNegative && isNegative == other.isNegative) {
+        if (integerPart < other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart < other.fractionalPart))
+            return true;
+    }
+
+    if (!isNegative && isNegative == other.isNegative) {
+        if (integerPart > other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart > other.fractionalPart))
+            return true;
+    }
+
     return false;
 }
 
 bool Decimal::operator>=(const Decimal& other) const {
-    if ((!isNegative && other.isNegative) ||
-        (other.isNegative == isNegative && (
-               (other.integerPart < integerPart) ||
-               (other.integerPart == integerPart && other.fractionalPart <= fractionalPart))))
+    if (!isNegative && other.isNegative)
         return true;
+
+    if (isNegative && isNegative == other.isNegative) {
+        if (integerPart < other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart <= other.fractionalPart))
+            return true;
+    }
+
+    if (!isNegative && isNegative == other.isNegative) {
+        if (integerPart > other.integerPart)
+            return true;
+        if ((integerPart == other.integerPart) && (fractionalPart >= other.fractionalPart))
+            return true;
+    }
+
     return false;
 }
 
@@ -334,16 +406,18 @@ void Decimal::round(int in_precision) {
         index = integerPart.size() - 1;
         while (index >= 0 && isRound) {
             if (index > 0) {
-                fractionalPart[index] = fractionalPart[index] == '9' ? '0' : (((fractionalPart[index] - '0') + 1) + '0');
-                isRound = fractionalPart[index] == '0' ? true : false;
+                integerPart[index] = integerPart[index] == '9' ? '0' : (((integerPart[index] - '0') + 1) + '0');
+                isRound = integerPart[index] == '0' ? true : false;
             } else if (index == 0) {
-                fractionalPart[index] = fractionalPart[index] == '9' ? '0' : (((fractionalPart[index] - '0') + 1) + '0');
-                integerPart = (fractionalPart[index] == '0')? "1" + integerPart : integerPart;
+                integerPart[index] = integerPart[index] == '9' ? '0' : (((integerPart[index] - '0') + 1) + '0');
+                integerPart = (integerPart[index] == '0')? "1" + integerPart : integerPart;
                 break;
             }
             --index;
         }
     }
+
+    precision = fractionalPart.size();
 }
 
 std::string Decimal::toString() const{

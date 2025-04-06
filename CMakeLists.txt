@@ -1,32 +1,21 @@
 cmake_minimum_required(VERSION 3.28)
-project(libdecimal)
+project(libdecimal LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-include(FetchContent)
+add_library(decimal src/decimal.cpp)
+target_include_directories(decimal PUBLIC include)
+add_executable(unit_tests tests/unit_tests.cpp)
 
-FetchContent_Declare(
-        Catch2
-        GIT_REPOSITORY https://github.com/catchorg/Catch2.git
-        GIT_TAG v3.8.0
-)
+target_link_libraries(unit_tests decimal)
 
-FetchContent_MakeAvailable(Catch2)
-
-add_library(libdecimal
-        src/decimal.cpp)
-
-target_include_directories(libdecimal PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include>)
-
-add_executable(tests
-        tests/unit_tests.cpp)
-
-target_link_libraries(tests PRIVATE libdecimal Catch2::Catch2)
+find_package(Catch2 REQUIRED)
+target_link_libraries(unit_tests Catch2::Catch2)
 
 include(CTest)
-enable_testing()
-
 include(Catch)
-catch_discover_tests(tests)
+catch_discover_tests(unit_tests)
+
+
+
